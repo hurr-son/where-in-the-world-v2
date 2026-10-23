@@ -34,3 +34,6 @@ __pycache__/
 
 # Downloaded source data (large; re-downloadable)
 data/raw/
+
+# Pipeline debug exports for QGIS (python tools/grid_to_gpkg.py)
+data/debug/
