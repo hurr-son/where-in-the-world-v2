@@ -138,6 +138,11 @@ body {
   line-height: 1.5;
 }
 
+.overlay .credits {
+  font-size: 0.8rem;
+  color: #555;
+}
+
 .start-message {
   color: #a01818;
   font-weight: 600;
