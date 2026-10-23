@@ -5,5 +5,21 @@ body {
 }
 
 #app {
+  position: relative;
   height: 100%;
+  overflow: hidden;
+}
+
+.imagery {
+  position: absolute;
+  inset: 0;
+  background: #111;
+}
+
+/* Provider logo control (see maps/imageryMap.ts). Mapbox's logo must not be
+   restyled, so only its size and position are set. */
+.provider-logo img {
+  display: block;
+  width: 81px;
+  height: 20px;
 }
