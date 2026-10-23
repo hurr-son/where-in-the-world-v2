@@ -235,3 +235,27 @@ for the simulation report) in a small TOML file in `tools/`.
 - Locations come from a GHS-POP population grid with two-stage country → cell
   sampling; the old `cities.geojson` is not reused.
 - Imagery is Mapbox Satellite at zoom 16; pivot to another provider later if needed.
+
+### Made while building (2026-10-23)
+
+- **GHS-POP epoch 2025** (R2023A, the latest release). It's modelled from census
+  data, but it's the epoch closest to the imagery.
+- **Country = Natural Earth `ADM0_A3`**, stored as `code` (not `iso`: `ISO_A3` is
+  `-99` for France, Norway and others, and `ADM0_A3` isn't always ISO). Display
+  name from `ADMIN` ("South Korea", not "Republic of Korea").
+- **Coastal cells:** a cell belongs to the country its centre is in; populated
+  cells whose centre is in the sea (1.7% of people) get the nearest country
+  within 200 km, measured in Equal Earth.
+- **`grid.json` is compact JSON**, not `[[cellIndex, pop], ...]`: per country, cell
+  indices are delta-encoded and cell populations rounded to 2 significant
+  figures. 5.1 MB raw, 1.1 MB gzipped (the plan's layout was 10.8 MB / 3.5 MB).
+- **Filters:** `min_cell_pop = 1000`, `min_country_pop = 100000` leave 688k cells
+  in 196 countries, 96% of the world's population.
+- **The tuning report is exact**, not 10,000 random draws: expected rounds per
+  10,000 from pop^β and pop^α, so no sampling noise.
+- **Guess and result maps use OpenFreeMap (Positron)**, the plan's alternative:
+  CARTO basemaps now need an API key; OpenFreeMap needs none and has no limits.
+- **Mapbox in MapLibre** is allowed for third-party libraries with attribution:
+  Raster Tiles API, 750k free tile requests a month; the Mapbox logo plus
+  © Mapbox, © OpenStreetMap, Improve this map, © Maxar. "Improve this map" links
+  without coordinates, so it can't reveal the answer.

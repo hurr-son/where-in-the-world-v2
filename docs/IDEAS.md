@@ -16,3 +16,9 @@
 
 ## Needs a backend
 - Accounts, leaderboards, multiplayer.
+
+## Sampling quality
+- The point is uniform within a ~5 km cell, so the imagery can show fields or
+  water even when the cell's people live in one village. Pick a 1 km pixel
+  inside the cell by population instead (needs sub-cell data in grid.json), or
+  reject points that fall in water.
