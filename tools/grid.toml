@@ -24,3 +24,6 @@ min_cell_pop = 1000
 # Countries (Natural Earth admin-0 units, including dependencies) with fewer
 # people than this are dropped entirely.
 min_country_pop = 100000
+
+[output]
+path = "public/data/grid.json"

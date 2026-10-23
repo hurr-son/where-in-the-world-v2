@@ -1,3 +1,5 @@
+import json
+
 import geopandas as gpd
 import numpy as np
 import pytest
@@ -9,12 +11,17 @@ from build_grid import (
     aggregate_raster,
     aggregation_factor,
     block_sum,
+    build_output,
     cell_centres,
     country_populations,
+    decode_cells,
+    encode_cells,
     fill_orphans,
     nearest_country,
     rasterize_countries,
+    round_significant,
     select_cells,
+    write_json,
 )
 
 # A 4 x 6 grid of 1-degree cells just north of the equator:
@@ -172,3 +179,53 @@ def test_select_cells_thresholds_are_inclusive():
     pop = np.array([[100.0, 99.9]])
     keep = select_cells(country_grid, pop, np.array([500.0]), min_cell_pop=100, min_country_pop=500)
     np.testing.assert_array_equal(keep, [[True, False]])
+
+
+def test_round_significant():
+    values = np.array([1234.0, 1267.0, 99_999.0, 1000.0, 45_678.9])
+    np.testing.assert_array_equal(
+        round_significant(values, 2), [1200, 1300, 100_000, 1000, 46_000]
+    )
+
+
+def test_encode_cells():
+    assert encode_cells(np.array([5, 6, 10, 7210])) == [5, 1, 4, 7200]
+
+
+def test_decode_cells_round_trip():
+    indices = np.array([0, 3, 4, 100, 25_000_000])
+    np.testing.assert_array_equal(decode_cells(encode_cells(indices)), indices)
+
+
+def test_build_output():
+    # Countries listed B first, so sorting by code is tested; C has no kept cells.
+    countries = gpd.GeoDataFrame(
+        {"code": ["BBB", "AAA", "CCC"], "name": ["B", "A", "C"]},
+        geometry=[box(0, 0, 1, 1)] * 3,
+        crs="EPSG:4326",
+    )
+    country_grid = np.array([[1, 2, 2], [1, 3, 2]])
+    pop = np.array([[1234.0, 2000.0, 5.0], [3456.0, 999.0, 7777.0]])
+    keep = pop >= 1000
+    country_pops = np.array([4690.0, 9782.0, 999.0])
+    transform = from_origin(-10.0, 50.0, 0.05, 0.05)
+
+    out = build_output(country_grid, pop, keep, countries, country_pops, transform)
+
+    assert out["grid"] == {"west": -10.0, "north": 50.0, "cellSize": 0.05, "cols": 3, "rows": 2}
+    assert [c["code"] for c in out["countries"]] == ["AAA", "BBB"]
+    a, b = out["countries"]
+    assert (a["name"], a["pop"]) == ("A", 9782)
+    np.testing.assert_array_equal(decode_cells(a["cells"]), [1, 5])  # row 0 col 1, row 1 col 2
+    assert a["cellPops"] == [2000, 7800]
+    np.testing.assert_array_equal(decode_cells(b["cells"]), [0, 3])
+    assert b["cellPops"] == [1200, 3500]
+
+
+def test_write_json(tmp_path):
+    path = tmp_path / "data" / "grid.json"
+    data = {"name": "Curaçao", "cells": [1, 2]}
+    text = write_json(data, path)
+    assert path.read_bytes() == text
+    assert json.loads(text) == data
+    assert b" " not in text  # compact

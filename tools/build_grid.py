@@ -2,8 +2,20 @@
 
 Run from the repo root:  python tools/build_grid.py
 Settings are in tools/grid.toml.
+
+Output (public/data/grid.json):
+    grid:      west, north (top-left corner, degrees), cellSize (degrees),
+               cols, rows. Cell index i is row i // cols, column i % cols,
+               counting rows from the north.
+    countries: list of {code, name, pop, cells, cellPops}, sorted by code.
+               pop is the country's total population. cells are the kept
+               cell indices in ascending order, delta-encoded (the first is
+               the index itself, each next one the gap from the previous).
+               cellPops are those cells' populations, to 2 significant figures.
 """
 
+import gzip
+import json
 import math
 import tomllib
 from pathlib import Path
@@ -176,6 +188,71 @@ def select_cells(
     return country_ok[country_grid] & (pop >= min_cell_pop)
 
 
+def round_significant(values: np.ndarray, digits: int) -> np.ndarray:
+    """Round values (>= 1) to `digits` significant figures, as integers."""
+    scale = 10.0 ** (np.floor(np.log10(values)) - (digits - 1))
+    return (np.round(values / scale) * scale).round().astype(np.int64)
+
+
+def encode_cells(indices: np.ndarray) -> list[int]:
+    """Delta-encode ascending cell indices: the first as is, then the gaps."""
+    return np.diff(indices, prepend=0).tolist()
+
+
+def decode_cells(deltas: list[int]) -> np.ndarray:
+    """Undo encode_cells."""
+    return np.cumsum(deltas)
+
+
+def build_output(
+    country_grid: np.ndarray,
+    pop: np.ndarray,
+    keep: np.ndarray,
+    countries: gpd.GeoDataFrame,
+    country_pops: np.ndarray,
+    transform: Affine,
+) -> dict:
+    """Assemble the grid.json structure (see the module docstring)."""
+    if not math.isclose(transform.a, -transform.e):
+        raise ValueError("cells must be square")
+    rows, cols = pop.shape
+    kept = np.flatnonzero(keep)  # row-major cell indices, ascending
+    kept_country = country_grid.ravel()[kept]
+    kept_pop = pop.ravel()[kept]
+
+    out_countries = []
+    for number in np.unique(kept_country):
+        in_country = kept_country == number
+        country = countries.iloc[number - 1]
+        out_countries.append({
+            "code": country["code"],
+            "name": country["name"],
+            "pop": round(float(country_pops[number - 1])),
+            "cells": encode_cells(kept[in_country]),
+            "cellPops": round_significant(kept_pop[in_country], 2).tolist(),
+        })
+    out_countries.sort(key=lambda c: c["code"])
+
+    return {
+        "grid": {
+            "west": transform.c,
+            "north": transform.f,
+            "cellSize": transform.a,
+            "cols": cols,
+            "rows": rows,
+        },
+        "countries": out_countries,
+    }
+
+
+def write_json(data: dict, path: Path) -> bytes:
+    """Write compact JSON (no spaces) and return the bytes written."""
+    text = json.dumps(data, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(text)
+    return text
+
+
 def main() -> None:
     config = load_config()
     pop, transform = aggregate_raster(
@@ -210,6 +287,12 @@ def main() -> None:
     kept_countries = np.unique(country_grid[keep])
     print(f"Kept {keep.sum():,} cells in {len(kept_countries)} countries, "
           f"holding {pop[keep].sum() / pop.sum():.1%} of the population")
+
+    output = build_output(country_grid, pop, keep, countries, country_pops, transform)
+    output_path = REPO_ROOT / config["output"]["path"]
+    text = write_json(output, output_path)
+    print(f"Wrote {output_path.relative_to(REPO_ROOT)}: {len(text) / 1e6:.2f} MB, "
+          f"{len(gzip.compress(text)) / 1e6:.2f} MB gzipped")
 
 
 if __name__ == "__main__":
