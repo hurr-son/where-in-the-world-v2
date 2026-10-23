@@ -18,6 +18,9 @@
 - Better sampling from GHSL urban-area polygons, or OSM land use.
 - Filter out low-resolution / cloudy imagery tiles.
 
+## Tooling
+- Run the pipeline's pytest suite in CI too (needs the GDAL-based wheels).
+
 ## Needs a backend
 - Accounts, leaderboards, multiplayer.
 
