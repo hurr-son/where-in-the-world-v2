@@ -35,7 +35,7 @@ export const config = {
     token: mapboxToken,
     // Static Tiles API from the label-free satellite-v9 style (the v4 Raster
     // Tiles API returns 429 for this account). 512 px tiles, @2x for sharp
-    // screens. Free tier: 200k tile requests a month.
+    // screens. This account's limited plan allows 20k tile requests a month.
     tileUrl: `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/512/{z}/{x}/{y}@2x?access_token=${mapboxToken}`,
     tileSize: 512,
     /** Highest tile zoom with global coverage. Beyond it, sharpness depends on
