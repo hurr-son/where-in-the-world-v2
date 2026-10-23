@@ -256,6 +256,7 @@ for the simulation report) in a small TOML file in `tools/`.
 - **Guess and result maps use OpenFreeMap (Positron)**, the plan's alternative:
   CARTO basemaps now need an API key; OpenFreeMap needs none and has no limits.
 - **Mapbox in MapLibre** is allowed for third-party libraries with attribution:
-  Raster Tiles API, 750k free tile requests a month; the Mapbox logo plus
+  Static Tiles API (satellite-v9 style; the v4 Raster Tiles API returned 429
+  for this account), 200k free tile requests a month; the Mapbox logo plus
   © Mapbox, © OpenStreetMap, Improve this map, © Maxar. "Improve this map" links
   without coordinates, so it can't reveal the answer.

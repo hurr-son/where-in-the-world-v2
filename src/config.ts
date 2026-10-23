@@ -33,8 +33,10 @@ export const config = {
   imagery: {
     /** Empty when VITE_MAPBOX_TOKEN isn't set. */
     token: mapboxToken,
-    // @2x = 512 px tiles for sharp screens; jpg90 = JPEG at 90 % quality.
-    tileUrl: `https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.jpg90?access_token=${mapboxToken}`,
+    // Static Tiles API from the label-free satellite-v9 style (the v4 Raster
+    // Tiles API returns 429 for this account). 512 px tiles, @2x for sharp
+    // screens. Free tier: 200k tile requests a month.
+    tileUrl: `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/512/{z}/{x}/{y}@2x?access_token=${mapboxToken}`,
     tileSize: 512,
     /** Highest tile zoom with global coverage. Beyond it, sharpness depends on
      *  the region, which would be a hint. */
