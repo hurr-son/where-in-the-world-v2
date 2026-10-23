@@ -25,6 +25,26 @@ body {
   isolation: isolate;
 }
 
+/* "Loading imagery…" or an error, in the middle of the imagery. */
+.imagery-status {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  max-width: 80%;
+  transform: translate(-50%, -50%);
+  padding: 10px 16px;
+  border-radius: 6px;
+  background: rgb(0 0 0 / 0.7);
+  color: white;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none; /* don't block panning */
+}
+
+.imagery-status.error {
+  background: rgb(150 20 20 / 0.9);
+}
+
 /* Provider logo control (see maps/imageryMap.ts). Mapbox's logo must not be
    restyled, so only its size and position are set. */
 .provider-logo img {
@@ -116,6 +136,11 @@ body {
   max-width: 32em;
   margin: 0;
   line-height: 1.5;
+}
+
+.start-message {
+  color: #a01818;
+  font-weight: 600;
 }
 
 /* The result screen is a full-size map with a strip of text below. */

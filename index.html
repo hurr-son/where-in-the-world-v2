@@ -9,6 +9,7 @@
     <div id="app">
       <!-- The round: always underneath. The sections below are overlays. -->
       <div id="imagery" class="imagery"></div>
+      <div id="imagery-status" class="imagery-status" hidden></div>
       <div class="hud">
         <span id="hud-round"></span>
         <span id="hud-score"></span>
@@ -28,6 +29,8 @@
           You'll see satellite images of places where people live. Click the map
           where you think each one is: the closer you are, the more points you get.
         </p>
+        <p id="start-warning" class="start-message" hidden></p>
+        <p id="start-error" class="start-message" hidden></p>
         <button id="start-button" class="button" type="button" disabled>Loading…</button>
       </section>
 

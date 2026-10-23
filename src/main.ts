@@ -8,14 +8,17 @@ import { loadGrid } from './locations'
 import { createGuessMap } from './maps/guessMap'
 import { createImageryMap, showLocation } from './maps/imageryMap'
 import { createResultMap } from './maps/resultMap'
-import { pickLocation } from './sampler'
+import { pickLocation, type GridFile } from './sampler'
 import { setupGuessPanel } from './ui/guessPanel'
+import { trackImagery } from './ui/imageryStatus'
 import { showScreen } from './ui/screens'
 import { renderSummary } from './ui/summary'
 
 const element = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!
 
 const startButton = element<HTMLButtonElement>('#start-button')
+const startWarning = element('#start-warning')
+const startError = element('#start-error')
 const hudRound = element('#hud-round')
 const hudScore = element('#hud-score')
 const guessButton = element<HTMLButtonElement>('#guess-button')
@@ -32,20 +35,38 @@ const guessMap = createGuessMap(element('#guess-map'), () => {
 })
 const resultMap = createResultMap(element('#result-map'))
 const guessPanel = setupGuessPanel(element('#guess-panel'))
+const imageryStatus = trackImagery(imageryMap, element('#imagery-status'))
 
 if (!config.imagery.token) {
-  console.warn('VITE_MAPBOX_TOKEN is not set: copy .env.example to .env and add your token.')
+  startWarning.textContent =
+    "Satellite imagery isn't set up: the Mapbox token (VITE_MAPBOX_TOKEN) is missing."
+  startWarning.hidden = false
 }
 
-showScreen('start')
-const grid = await loadGrid()
-startButton.disabled = false
-startButton.textContent = 'Start'
-
+let grid: GridFile | null = null
 let game: Game
 
+/** Download the locations; on failure, offer to try again. */
+async function prepare() {
+  startButton.disabled = true
+  startButton.textContent = 'Loading…'
+  startError.hidden = true
+  try {
+    grid = await loadGrid()
+    startButton.textContent = 'Start'
+  } catch (error) {
+    console.error(error)
+    startError.textContent = "Couldn't load the game data. Check your connection and try again."
+    startError.hidden = false
+    startButton.textContent = 'Try again'
+  }
+  startButton.disabled = false
+}
+
 function startGame() {
-  game = new Game(config, () => pickLocation(grid, config.sampling, Math.random))
+  const loaded = grid
+  if (!loaded) return
+  game = new Game(config, () => pickLocation(loaded, config.sampling, Math.random))
   startRound()
 }
 
@@ -55,6 +76,7 @@ function startRound() {
   guessPanel.close()
   guessButton.disabled = true
   showLocation(imageryMap, location.lat, location.lon)
+  imageryStatus.loading()
   hudRound.textContent = `Round ${game.results.length + 1} of ${game.roundsPerGame}`
   hudScore.textContent = `${formatPoints(game.totalPoints)} points`
   showScreen('round')
@@ -83,7 +105,10 @@ function next() {
   showScreen('summary')
 }
 
-startButton.addEventListener('click', startGame)
+startButton.addEventListener('click', () => (grid ? startGame() : void prepare()))
 guessButton.addEventListener('click', submitGuess)
 nextButton.addEventListener('click', next)
 playAgainButton.addEventListener('click', startGame)
+
+showScreen('start')
+void prepare()

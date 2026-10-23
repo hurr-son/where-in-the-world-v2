@@ -3,6 +3,9 @@ import { config } from '../config'
 import { kmToDegrees } from '../geo'
 import './setup'
 
+/** The id of the imagery source in the map's style. */
+export const IMAGERY_SOURCE_ID = 'imagery'
+
 /** The full-screen satellite view. Created once and reused every round. */
 export function createImageryMap(container: HTMLElement): MapLibreMap {
   const { imagery } = config
@@ -12,7 +15,7 @@ export function createImageryMap(container: HTMLElement): MapLibreMap {
     style: {
       version: 8,
       sources: {
-        imagery: {
+        [IMAGERY_SOURCE_ID]: {
           type: 'raster',
           tiles: [imagery.tileUrl],
           tileSize: imagery.tileSize,
@@ -22,7 +25,7 @@ export function createImageryMap(container: HTMLElement): MapLibreMap {
           attribution: imagery.attribution,
         },
       },
-      layers: [{ id: 'imagery', type: 'raster', source: 'imagery' }],
+      layers: [{ id: 'imagery', type: 'raster', source: IMAGERY_SOURCE_ID }],
     },
     center: [0, 0],
     zoom: config.imageryZoom,
