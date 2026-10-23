@@ -46,10 +46,20 @@ body {
   gap: 8px;
 }
 
+.guess-map-wrap {
+  position: relative;
+}
+
 .guess-map {
   height: 240px;
   border-radius: 6px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.5);
+}
+
+/* Phone-only buttons (see the media query at the end). */
+.guess-expand,
+.guess-collapse {
+  display: none;
 }
 
 .button {
@@ -154,4 +164,52 @@ body {
 .summary-table th:nth-child(n + 3),
 .summary-table td:nth-child(n + 3) {
   text-align: right;
+}
+
+/* Phones: the guess map spans the bottom of the screen. It starts short;
+   tapping it opens it (a see-through button over the map catches that first
+   tap, so it doesn't drop a marker), and "Show image" closes it. */
+@media (max-width: 640px) {
+  .guess-panel {
+    left: 8px;
+    right: 8px;
+    width: auto;
+    bottom: 32px;
+  }
+
+  .guess-map {
+    height: 22vh;
+  }
+
+  .guess-panel.expanded .guess-map {
+    height: 60vh;
+  }
+
+  .guess-panel:not(.expanded) .guess-expand {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    border: 0;
+    border-radius: 6px;
+    background: rgb(0 0 0 / 0.25);
+    color: white;
+    font: inherit;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .guess-panel.expanded .guess-collapse {
+    display: block;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 6px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: rgb(0 0 0 / 0.7);
+    color: white;
+    font: inherit;
+    font-weight: 600;
+  }
 }

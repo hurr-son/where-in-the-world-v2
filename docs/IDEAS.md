@@ -7,6 +7,9 @@
 - Avoid repeating a country within a game (now only the same ~5 km cell is avoided).
 - Daily challenge: same 5 locations for everyone, seeded by date.
 
+## Layout
+- Desktop: enlarge the guess map on hover (it's a fixed 360 x 240 px now).
+
 ## Result screen
 - Reverse-geocode the answer for a town/region name.
 - Share-your-score text, local high scores (localStorage).

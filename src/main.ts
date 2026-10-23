@@ -9,6 +9,7 @@ import { createGuessMap } from './maps/guessMap'
 import { createImageryMap, showLocation } from './maps/imageryMap'
 import { createResultMap } from './maps/resultMap'
 import { pickLocation } from './sampler'
+import { setupGuessPanel } from './ui/guessPanel'
 import { showScreen } from './ui/screens'
 import { renderSummary } from './ui/summary'
 
@@ -30,6 +31,7 @@ const guessMap = createGuessMap(element('#guess-map'), () => {
   guessButton.disabled = false
 })
 const resultMap = createResultMap(element('#result-map'))
+const guessPanel = setupGuessPanel(element('#guess-panel'))
 
 if (!config.imagery.token) {
   console.warn('VITE_MAPBOX_TOKEN is not set: copy .env.example to .env and add your token.')
@@ -50,6 +52,7 @@ function startGame() {
 function startRound() {
   const location = game.startRound()
   guessMap.reset()
+  guessPanel.close()
   guessButton.disabled = true
   showLocation(imageryMap, location.lat, location.lon)
   hudRound.textContent = `Round ${game.results.length + 1} of ${game.roundsPerGame}`
