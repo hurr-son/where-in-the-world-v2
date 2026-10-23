@@ -25,6 +25,9 @@ export const config = {
 
   /** Map zoom of the imagery view. With 512 px tiles, map zoom = tile zoom. */
   imageryZoom: 16,
+  /** How far beyond the starting view the player can pan the imagery, in km.
+   *  0 turns panning and zooming off. */
+  panRadiusKm: 1,
 
   /** The satellite imagery provider. Swap this block to change provider. */
   imagery: {

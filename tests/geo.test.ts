@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EARTH_RADIUS_KM, greatCirclePoints, haversineKm, type LatLon } from '../src/geo'
+import { EARTH_RADIUS_KM, greatCirclePoints, haversineKm, kmToDegrees, type LatLon } from '../src/geo'
 
 const LONDON: LatLon = { lat: 51.5074, lon: -0.1278 }
 const PARIS: LatLon = { lat: 48.8566, lon: 2.3522 }
@@ -64,5 +64,25 @@ describe('greatCirclePoints', () => {
 
   it('handles identical points', () => {
     expect(greatCirclePoints(PARIS, PARIS)).toEqual([[PARIS.lon, PARIS.lat], [PARIS.lon, PARIS.lat]])
+  })
+})
+
+describe('kmToDegrees', () => {
+  it('gives about 0.009 degrees per km at the equator, the same both ways', () => {
+    const { dLat, dLon } = kmToDegrees(1, 0)
+    expect(dLat).toBeCloseTo(0.008993, 6)
+    expect(dLon).toBeCloseTo(dLat, 12)
+  })
+
+  it('needs twice the longitude degrees at 60 degrees latitude', () => {
+    const { dLat, dLon } = kmToDegrees(1, 60)
+    expect(dLon).toBeCloseTo(2 * dLat, 9)
+  })
+
+  it('round-trips through haversine', () => {
+    const { dLat, dLon } = kmToDegrees(1, 45)
+    expect(haversineKm({ lat: 45, lon: 10 }, { lat: 45 + dLat, lon: 10 })).toBeCloseTo(1, 6)
+    // Along a parallel the great circle is a touch shorter, so allow 1 m.
+    expect(haversineKm({ lat: 45, lon: 10 }, { lat: 45, lon: 10 + dLon })).toBeCloseTo(1, 3)
   })
 })

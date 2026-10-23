@@ -1,5 +1,6 @@
 import { MapLibreMap, type IControl } from 'maplibre-gl'
 import { config } from '../config'
+import { kmToDegrees } from '../geo'
 import './setup'
 
 /** The full-screen satellite view. Created once and reused every round. */
@@ -25,15 +26,33 @@ export function createImageryMap(container: HTMLElement): MapLibreMap {
     },
     center: [0, 0],
     zoom: config.imageryZoom,
-    interactive: false, // no panning or zooming (for now)
+    // Zooming in past imageryZoom would only enlarge the same tiles.
+    maxZoom: config.imageryZoom,
+    interactive: config.panRadiusKm > 0,
+    // Keep north up: no rotating or tilting.
+    dragRotate: false,
+    pitchWithRotate: false,
+    touchPitch: false,
   })
+  map.touchZoomRotate.disableRotation()
+  map.keyboard.disableRotation()
   map.addControl(new LogoControl(imagery.logo), 'bottom-left')
   return map
 }
 
-/** Move the imagery to a round's location. */
+/** Move the imagery to a round's location. The player can then pan and
+ *  zoom out up to config.panRadiusKm beyond the starting view. */
 export function showLocation(map: MapLibreMap, lat: number, lon: number): void {
+  map.setMaxBounds(null) // last round's limits would block the jump
   map.jumpTo({ center: [lon, lat], zoom: config.imageryZoom })
+  if (config.panRadiusKm <= 0) return
+
+  const view = map.getBounds()
+  const { dLat, dLon } = kmToDegrees(config.panRadiusKm, lat)
+  map.setMaxBounds([
+    [view.getWest() - dLon, view.getSouth() - dLat],
+    [view.getEast() + dLon, view.getNorth() + dLat],
+  ])
 }
 
 interface Logo {

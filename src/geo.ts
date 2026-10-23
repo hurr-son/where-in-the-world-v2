@@ -21,6 +21,14 @@ export function haversineKm(a: LatLon, b: LatLon): number {
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)))
 }
 
+/** How many degrees of latitude and longitude span `km` around latitude
+ *  `lat`. For short distances only. Longitude degrees get narrower towards
+ *  the poles (by cos(lat)), so the same km needs more of them. */
+export function kmToDegrees(km: number, lat: number): { dLat: number; dLon: number } {
+  const dLat = toDegrees(km / EARTH_RADIUS_KM)
+  return { dLat, dLon: dLat / Math.cos(toRadians(lat)) }
+}
+
 /**
  * Points along the great circle from a to b, as [lon, lat] pairs (GeoJSON
  * order), for drawing the shortest route on a map. Longitudes are unwrapped
