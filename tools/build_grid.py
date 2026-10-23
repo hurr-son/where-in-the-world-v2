@@ -150,6 +150,32 @@ def fill_orphans(
     return filled
 
 
+def country_populations(
+    country_grid: np.ndarray, pop: np.ndarray, n_countries: int
+) -> np.ndarray:
+    """Total population of each country; index i is row i of countries.
+
+    Cells with no country (0) are left out.
+    """
+    # bincount adds up pop for each country number in one pass.
+    totals = np.bincount(country_grid.ravel(), weights=pop.ravel(), minlength=n_countries + 1)
+    return totals[1:]
+
+
+def select_cells(
+    country_grid: np.ndarray,
+    pop: np.ndarray,
+    country_pops: np.ndarray,
+    min_cell_pop: float,
+    min_country_pop: float,
+) -> np.ndarray:
+    """Mask of cells to keep: at least min_cell_pop people, in a country with
+    at least min_country_pop people. Cells with no country are dropped."""
+    # Lookup table by country number; index 0 is "no country".
+    country_ok = np.concatenate([[False], country_pops >= min_country_pop])
+    return country_ok[country_grid] & (pop >= min_cell_pop)
+
+
 def main() -> None:
     config = load_config()
     pop, transform = aggregate_raster(
@@ -175,6 +201,15 @@ def main() -> None:
     unassigned = (country_grid == 0) & (pop > 0)
     print(f"Still no country within {config['countries']['max_snap_km']} km: "
           f"{unassigned.sum():,} cells ({pop[unassigned].sum():,.0f} people)")
+
+    filters = config["filters"]
+    country_pops = country_populations(country_grid, pop, len(countries))
+    keep = select_cells(
+        country_grid, pop, country_pops, filters["min_cell_pop"], filters["min_country_pop"]
+    )
+    kept_countries = np.unique(country_grid[keep])
+    print(f"Kept {keep.sum():,} cells in {len(kept_countries)} countries, "
+          f"holding {pop[keep].sum() / pop.sum():.1%} of the population")
 
 
 if __name__ == "__main__":

@@ -10,9 +10,11 @@ from build_grid import (
     aggregation_factor,
     block_sum,
     cell_centres,
+    country_populations,
     fill_orphans,
     nearest_country,
     rasterize_countries,
+    select_cells,
 )
 
 # A 4 x 6 grid of 1-degree cells just north of the equator:
@@ -144,3 +146,29 @@ def test_fill_orphans_respects_max_distance(two_countries):
     pop[1, 5] = 50  # centre is 0.5 degrees (~55 km) east of B
     filled = fill_orphans(grid, pop, two_countries, GRID_TRANSFORM, METRIC_CRS, max_distance_km=20)
     assert filled[1, 5] == 0
+
+
+def test_country_populations():
+    country_grid = np.array([[1, 1, 0], [2, 2, 2]])
+    pop = np.array([[10.0, 20.0, 99.0], [1.0, 2.0, 3.0]])
+    totals = country_populations(country_grid, pop, n_countries=3)
+    np.testing.assert_array_equal(totals, [30, 6, 0])  # cell with no country left out
+
+
+def test_select_cells():
+    country_grid = np.array([[1, 1, 0], [2, 2, 2]])
+    pop = np.array([[100.0, 99.0, 500.0], [400.0, 400.0, 400.0]])
+    country_pops = np.array([199.0, 1200.0])
+
+    keep = select_cells(country_grid, pop, country_pops, min_cell_pop=100, min_country_pop=1000)
+
+    # Country 1 is too small, so even its 100-person cell goes; the cell with
+    # no country goes; all of country 2's cells pass.
+    np.testing.assert_array_equal(keep, [[False, False, False], [True, True, True]])
+
+
+def test_select_cells_thresholds_are_inclusive():
+    country_grid = np.array([[1, 1]])
+    pop = np.array([[100.0, 99.9]])
+    keep = select_cells(country_grid, pop, np.array([500.0]), min_cell_pop=100, min_country_pop=500)
+    np.testing.assert_array_equal(keep, [[True, False]])

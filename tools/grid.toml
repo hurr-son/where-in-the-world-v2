@@ -16,3 +16,11 @@ cell_size_deg = 0.05
 # metric_crs (Equal Earth), not in degrees.
 metric_crs = "EPSG:8857"
 max_snap_km = 200
+
+[filters]
+# Cells with fewer people than this are dropped. 1000 people in a 0.05 degree
+# cell (~20-30 km2) is roughly rural land with villages.
+min_cell_pop = 1000
+# Countries (Natural Earth admin-0 units, including dependencies) with fewer
+# people than this are dropped entirely.
+min_country_pop = 100000
