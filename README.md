@@ -12,7 +12,6 @@ see [docs/PROTOTYPE_PLAN.md](docs/PROTOTYPE_PLAN.md) for the plan and decisions.
 ## How to play
 
 1. Press **Start**. You get satellite imagery of a random populated place.
-   You can pan and zoom out a little (about 1 km).
 2. Click the small map to place your guess (on a phone, tap it to open it
    first), then press **Guess** or Enter.
 3. See how far off you were and which country it was. Press **Next round**

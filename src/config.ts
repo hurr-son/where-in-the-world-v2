@@ -27,7 +27,7 @@ export const config = {
   imageryZoom: 16,
   /** How far beyond the starting view the player can pan the imagery, in km.
    *  0 turns panning and zooming off. */
-  panRadiusKm: 1,
+  panRadiusKm: 0,
 
   /** The satellite imagery provider. Swap this block to change provider. */
   imagery: {
