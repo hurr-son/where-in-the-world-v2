@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatDistance } from '../src/format'
+import { formatDistance, formatPoints } from '../src/format'
 
 describe('formatDistance', () => {
   it('uses metres under 1 km', () => {
@@ -16,5 +16,13 @@ describe('formatDistance', () => {
     expect(formatDistance(10)).toBe('10 km')
     expect(formatDistance(1234.5)).toBe('1,235 km')
     expect(formatDistance(20015.1)).toBe('20,015 km')
+  })
+})
+
+describe('formatPoints', () => {
+  it('adds thousands separators', () => {
+    expect(formatPoints(0)).toBe('0')
+    expect(formatPoints(950)).toBe('950')
+    expect(formatPoints(25_000)).toBe('25,000')
   })
 })

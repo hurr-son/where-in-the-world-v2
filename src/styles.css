@@ -52,8 +52,7 @@ body {
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.5);
 }
 
-.guess-button,
-.next-button {
+.button {
   padding: 10px 20px;
   border: 0;
   border-radius: 6px;
@@ -65,17 +64,55 @@ body {
   cursor: pointer;
 }
 
-.guess-button:disabled {
+.button:disabled {
   background: #777;
   cursor: default;
 }
 
-/* Round result: covers the whole screen. */
-.result {
+/* Round info, top left. */
+.hud {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  gap: 16px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: rgb(0 0 0 / 0.6);
+  color: white;
+  font-weight: 600;
+}
+
+/* Start, result and summary screens cover the round. */
+.overlay {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  overflow: auto;
+  background: #f4f4f0;
+  text-align: center;
+}
+
+.overlay h1 {
+  margin: 0;
+}
+
+.overlay p {
+  max-width: 32em;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* The result screen is a full-size map with a strip of text below. */
+.result {
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
   background: white;
 }
 
@@ -95,4 +132,26 @@ body {
 .result-text {
   margin: 0;
   font-size: 1.2rem;
+}
+
+.summary-total {
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.summary-table {
+  border-collapse: collapse;
+}
+
+.summary-table th,
+.summary-table td {
+  padding: 6px 14px;
+  border-bottom: 1px solid #ccc;
+  text-align: left;
+}
+
+/* Right-align the numbers. */
+.summary-table th:nth-child(n + 3),
+.summary-table td:nth-child(n + 3) {
+  text-align: right;
 }

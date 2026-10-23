@@ -7,18 +7,45 @@
   </head>
   <body>
     <div id="app">
+      <!-- The round: always underneath. The sections below are overlays. -->
       <div id="imagery" class="imagery"></div>
+      <div class="hud">
+        <span id="hud-round"></span>
+        <span id="hud-score"></span>
+      </div>
       <div class="guess-panel">
         <div id="guess-map" class="guess-map"></div>
-        <button id="guess-button" class="guess-button" type="button" disabled>Guess</button>
+        <button id="guess-button" class="button" type="button" disabled>Guess</button>
       </div>
-      <div id="result" class="result" hidden>
+
+      <section class="overlay" data-screen="start">
+        <h1>Where in the World</h1>
+        <p>
+          You'll see satellite images of places where people live. Click the map
+          where you think each one is: the closer you are, the more points you get.
+        </p>
+        <button id="start-button" class="button" type="button" disabled>Loading…</button>
+      </section>
+
+      <section class="overlay result" data-screen="result" hidden>
         <div id="result-map" class="result-map"></div>
         <div class="result-panel">
           <p id="result-text" class="result-text"></p>
-          <button id="next-button" class="next-button" type="button">Play another</button>
+          <button id="next-button" class="button" type="button">Next round</button>
         </div>
-      </div>
+      </section>
+
+      <section class="overlay" data-screen="summary" hidden>
+        <h1>Your score</h1>
+        <p id="summary-total" class="summary-total"></p>
+        <table class="summary-table">
+          <thead>
+            <tr><th>Round</th><th>Country</th><th>Distance</th><th>Points</th></tr>
+          </thead>
+          <tbody id="summary-rows"></tbody>
+        </table>
+        <button id="play-again-button" class="button" type="button">Play again</button>
+      </section>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
