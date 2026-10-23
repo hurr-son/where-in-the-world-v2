@@ -1,0 +1,9 @@
+# Settings for tools/build_grid.py. Paths are relative to the repo root.
+
+[inputs]
+population = "data/raw/GHS_POP_E2025_GLOBE_R2023A_4326_30ss/GHS_POP_E2025_GLOBE_R2023A_4326_30ss_V1_0.tif"
+
+[grid]
+# Output cell size in degrees. Must be a whole multiple of the raster's pixel
+# size (30 arc-seconds = 1/120 degree), so 0.05 = 6 x 6 pixels.
+cell_size_deg = 0.05
