@@ -19,7 +19,7 @@ frontend. He wants to understand every line he keeps. So:
 
 ## Stack
 - Vite + TypeScript (no framework), MapLibre GL JS, Vitest
-- Data pipeline: Python 3.11, geopandas, shapely, pyproj, pytest (in `tools/`)
+- Data pipeline: Python 3.11, rasterio, geopandas, shapely, pyproj, numpy, pytest (in `tools/`)
 - Hosting: GitHub Pages via GitHub Actions
 
 ## Rules
