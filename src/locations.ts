@@ -1,6 +1,4 @@
-import { config } from './config'
-import type { Rng } from './rng'
-import { pickLocation, type GridFile, type Location } from './sampler'
+import type { GridFile } from './sampler'
 
 // BASE_URL is vite.config.ts's `base`, so this works locally and on Pages.
 const GRID_URL = `${import.meta.env.BASE_URL}data/grid.json`
@@ -19,9 +17,4 @@ export function loadGrid(): Promise<GridFile> {
       throw error
     })
   return gridPromise
-}
-
-/** A random location for the next round. */
-export async function nextLocation(rng: Rng = Math.random): Promise<Location> {
-  return pickLocation(await loadGrid(), config.sampling, rng)
 }

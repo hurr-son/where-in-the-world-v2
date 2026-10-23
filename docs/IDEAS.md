@@ -4,6 +4,7 @@
 - Difficulty: zoom level, Sentinel-2 region mode, and a slider for α/β
   ("world tour" ↔ "where people actually live").
 - Hints (pay points to reveal continent).
+- Avoid repeating a country within a game (now only the same ~5 km cell is avoided).
 - Daily challenge: same 5 locations for everyone, seeded by date.
 
 ## Result screen

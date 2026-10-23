@@ -34,18 +34,10 @@ describe('locations', () => {
   })
 
   it('downloads only once', async () => {
-    const { loadGrid, nextLocation } = await freshModule()
+    const { loadGrid } = await freshModule()
     await loadGrid()
-    await nextLocation()
-    await nextLocation()
+    await loadGrid()
     expect(fetch).toHaveBeenCalledTimes(1)
-  })
-
-  it('returns a location from the grid', async () => {
-    const { nextLocation } = await freshModule()
-    const location = await nextLocation()
-    expect(location.countryCode).toBe('AAA')
-    expect(location.cellIndex).toBe(5)
   })
 
   it('reports a failed download and allows a retry', async () => {

@@ -3,12 +3,12 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import './styles.css'
 import { config } from './config'
 import { formatDistance } from './format'
-import { haversineKm } from './geo'
-import { nextLocation } from './locations'
+import { Game } from './game'
+import { loadGrid } from './locations'
 import { createGuessMap } from './maps/guessMap'
 import { createImageryMap, showLocation } from './maps/imageryMap'
 import { createResultMap } from './maps/resultMap'
-import type { Location } from './sampler'
+import { pickLocation } from './sampler'
 
 const element = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!
 
@@ -28,26 +28,30 @@ if (!config.imagery.token) {
   console.warn('VITE_MAPBOX_TOKEN is not set: copy .env.example to .env and add your token.')
 }
 
-let answer: Location | null = null
+const grid = await loadGrid()
+const newGame = () => new Game(config, () => pickLocation(grid, config.sampling, Math.random))
+let game = newGame()
 
-async function startRound() {
+function startRound() {
+  if (game.isOver) game = newGame()
   resultScreen.hidden = true
   guessMap.reset()
   guessButton.disabled = true
-  answer = await nextLocation()
-  showLocation(imageryMap, answer.lat, answer.lon)
+  const location = game.startRound()
+  showLocation(imageryMap, location.lat, location.lon)
 }
 
 guessButton.addEventListener('click', () => {
   const guess = guessMap.guess()
-  if (!guess || !answer) return
-  const distance = haversineKm(guess, answer)
+  if (!guess) return
+  const result = game.submitGuess(guess)
   resultText.textContent =
-    `Your guess was ${formatDistance(distance)} away. This place is in ${answer.countryName}.`
+    `Your guess was ${formatDistance(result.distanceKm)} away: ${result.points} points. ` +
+    `This place is in ${result.location.countryName}.`
   resultScreen.hidden = false
-  resultMap.show(guess, answer)
+  resultMap.show(guess, result.location)
 })
 
-nextButton.addEventListener('click', () => void startRound())
+nextButton.addEventListener('click', startRound)
 
-void startRound()
+startRound()
