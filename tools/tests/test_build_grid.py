@@ -13,7 +13,9 @@ from build_grid import (
     block_sum,
     build_output,
     cell_centres,
+    cell_class_shares,
     country_populations,
+    country_shares,
     decode_cells,
     encode_cells,
     fill_orphans,
@@ -229,3 +231,31 @@ def test_write_json(tmp_path):
     assert path.read_bytes() == text
     assert json.loads(text) == data
     assert b" " not in text  # compact
+
+
+def make_output(countries):
+    """Minimal grid.json-like dict: countries as (pop, cellPops) pairs."""
+    return {"countries": [{"code": f"C{i}", "pop": pop, "cellPops": cell_pops}
+                          for i, (pop, cell_pops) in enumerate(countries)]}
+
+
+def test_country_shares():
+    output = make_output([(100, [100]), (10_000, [10_000])])
+    np.testing.assert_allclose(country_shares(output, beta=0), [0.5, 0.5])
+    np.testing.assert_allclose(country_shares(output, beta=1), [100 / 10_100, 10_000 / 10_100])
+    # beta = 0.5: weights 10 and 100
+    np.testing.assert_allclose(country_shares(output, beta=0.5), [10 / 110, 100 / 110])
+
+
+def test_cell_class_shares():
+    # Country 0: cells of 1000 and 3000 people. Country 1: one 50 000 cell.
+    output = make_output([(4000, [1000, 3000]), (50_000, [50_000])])
+    shares = cell_class_shares(output, alpha=1, beta=0, class_edges=[1000, 2000, 20_000])
+    # Each country gets half the rounds; country 0 splits its half 1:3.
+    np.testing.assert_allclose(shares, [0.125, 0.375, 0.5])
+
+
+def test_cell_class_shares_sum_to_one():
+    output = make_output([(5000, [1000, 4000]), (1e6, [2000, 30_000, 900_000])])
+    shares = cell_class_shares(output, alpha=0.8, beta=0.3, class_edges=[1000, 5000, 100_000])
+    assert shares.sum() == pytest.approx(1)

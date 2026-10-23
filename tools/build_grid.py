@@ -35,6 +35,10 @@ CONFIG_PATH = TOOLS_DIR / "grid.toml"
 # France, Norway and others); ADMIN is the common English name.
 CODE_FIELD = "ADM0_A3"
 NAME_FIELD = "ADMIN"
+CONTINENT_FIELD = "CONTINENT"
+
+# Lower edges of the cell-population classes in the report.
+REPORT_CELL_CLASSES = [1_000, 5_000, 20_000, 100_000]
 
 
 def load_config(path: Path = CONFIG_PATH) -> dict:
@@ -94,9 +98,11 @@ def aggregate_raster(
 
 
 def load_countries(path: Path) -> gpd.GeoDataFrame:
-    """Read country polygons as columns code, name, geometry in EPSG:4326."""
-    countries = gpd.read_file(path, columns=[CODE_FIELD, NAME_FIELD])
-    countries = countries.rename(columns={CODE_FIELD: "code", NAME_FIELD: "name"})
+    """Read country polygons as columns code, name, continent, geometry in EPSG:4326."""
+    countries = gpd.read_file(path, columns=[CODE_FIELD, NAME_FIELD, CONTINENT_FIELD])
+    countries = countries.rename(
+        columns={CODE_FIELD: "code", NAME_FIELD: "name", CONTINENT_FIELD: "continent"}
+    )
     return countries.to_crs("EPSG:4326").reset_index(drop=True)
 
 
@@ -253,6 +259,56 @@ def write_json(data: dict, path: Path) -> bytes:
     return text
 
 
+def country_shares(output: dict, beta: float) -> np.ndarray:
+    """Chance of each country in output["countries"] being picked: pop^beta,
+    normalised. beta = 0 makes all countries equal, 1 is pure population."""
+    weights = np.array([c["pop"] for c in output["countries"]], dtype=float) ** beta
+    return weights / weights.sum()
+
+
+def cell_class_shares(
+    output: dict, alpha: float, beta: float, class_edges: list[float]
+) -> np.ndarray:
+    """Chance that a round lands in a cell whose population falls in each
+    class. Class k covers [class_edges[k], class_edges[k + 1])."""
+    shares = np.zeros(len(class_edges))
+    for country_share, country in zip(country_shares(output, beta), output["countries"]):
+        cell_pops = np.array(country["cellPops"], dtype=float)
+        cell_weights = cell_pops**alpha
+        # Chance of each cell = chance of its country x its share within the country.
+        cell_chances = country_share * cell_weights / cell_weights.sum()
+        classes = np.searchsorted(class_edges, cell_pops, side="right") - 1
+        shares += np.bincount(classes, weights=cell_chances, minlength=len(class_edges))
+    return shares
+
+
+def print_report(
+    output: dict, continents: dict[str, str], alpha: float, beta: float, n_rounds: int = 10_000
+) -> None:
+    """Print expected rounds per country, continent and cell size for n_rounds."""
+    shares = country_shares(output, beta)
+    print(f"\nExpected rounds out of {n_rounds:,} (alpha={alpha}, beta={beta})")
+
+    print("\nTop 20 countries:")
+    for i in np.argsort(-shares)[:20]:
+        country = output["countries"][i]
+        print(f"  {country['name']:<34} {shares[i] * n_rounds:7.0f}")
+
+    by_continent: dict[str, float] = {}
+    for share, country in zip(shares, output["countries"]):
+        continent = continents[country["code"]]
+        by_continent[continent] = by_continent.get(continent, 0.0) + share
+    print("\nBy continent:")
+    for continent, share in sorted(by_continent.items(), key=lambda kv: -kv[1]):
+        print(f"  {continent:<34} {share * n_rounds:7.0f}")
+
+    print("\nBy people in the cell:")
+    edges = REPORT_CELL_CLASSES
+    labels = [f"{lo:,}-{hi:,}" for lo, hi in zip(edges, edges[1:])] + [f"{edges[-1]:,}+"]
+    for label, share in zip(labels, cell_class_shares(output, alpha, beta, edges)):
+        print(f"  {label:<34} {share * n_rounds:7.0f}")
+
+
 def main() -> None:
     config = load_config()
     pop, transform = aggregate_raster(
@@ -293,6 +349,10 @@ def main() -> None:
     text = write_json(output, output_path)
     print(f"Wrote {output_path.relative_to(REPO_ROOT)}: {len(text) / 1e6:.2f} MB, "
           f"{len(gzip.compress(text)) / 1e6:.2f} MB gzipped")
+
+    sampling = config["sampling"]
+    continents = dict(zip(countries["code"], countries["continent"]))
+    print_report(output, continents, sampling["cell_exponent"], sampling["country_exponent"])
 
 
 if __name__ == "__main__":

@@ -27,3 +27,11 @@ min_country_pop = 100000
 
 [output]
 path = "public/data/grid.json"
+
+[sampling]
+# Only used for the report printed at the end. The game's own values live in
+# src/config.ts; keep them in sync.
+# beta: a country is picked with weight pop^beta (0 = all equal, 1 = by population).
+country_exponent = 0.3
+# alpha: within the country, a cell is picked with weight pop^alpha.
+cell_exponent = 0.8
