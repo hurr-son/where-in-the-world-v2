@@ -2,6 +2,7 @@ html,
 body {
   margin: 0;
   height: 100%;
+  font-family: system-ui, sans-serif;
 }
 
 #app {
@@ -22,4 +23,39 @@ body {
   display: block;
   width: 81px;
   height: 20px;
+}
+
+/* Guess map and button, bottom right. Raised a little so the imagery's
+   attribution underneath stays visible. */
+.guess-panel {
+  position: absolute;
+  right: 12px;
+  bottom: 36px;
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.guess-map {
+  height: 240px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.5);
+}
+
+.guess-button {
+  padding: 10px;
+  border: 0;
+  border-radius: 6px;
+  background: #1d7a3e;
+  color: white;
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.guess-button:disabled {
+  background: #777;
+  cursor: default;
 }

@@ -36,4 +36,12 @@ export const config = {
     /** Logo the provider requires on the map. */
     logo: { href: 'https://www.mapbox.com/', imageUrl: mapboxLogoUrl, alt: 'Mapbox' },
   },
+
+  /** The map the player clicks to guess. OpenFreeMap: free OpenStreetMap
+   *  vector tiles, no API key; MapLibre shows its attribution automatically. */
+  guessMap: {
+    styleUrl: 'https://tiles.openfreemap.org/styles/positron',
+    center: { lat: 20, lon: 0 },
+    zoom: 0,
+  },
 }
