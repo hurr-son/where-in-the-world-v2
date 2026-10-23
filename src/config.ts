@@ -5,6 +5,16 @@ import mapboxLogoUrl from './assets/mapbox-logo.svg'
 const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN ?? ''
 
 export const config = {
+  roundsPerGame: 5,
+
+  scoring: {
+    /** Points for a perfect guess. */
+    maxPoints: 5000,
+    /** Points fall to ~37 % (1/e) of maxPoints at this distance, ~14 % at
+     *  twice it, and so on. */
+    scaleKm: 2000,
+  },
+
   sampling: {
     /** beta: a country is picked with weight pop^beta. 0 = all countries
      *  equal, 1 = by population. Keep in sync with tools/grid.toml. */
