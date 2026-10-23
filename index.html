@@ -20,7 +20,8 @@
           <button id="guess-expand" class="guess-expand" type="button">Tap to guess</button>
           <button id="guess-collapse" class="guess-collapse" type="button">Show image</button>
         </div>
-        <button id="guess-button" class="button" type="button" disabled>Guess</button>
+        <button id="guess-button" class="button" type="button" disabled
+          aria-keyshortcuts="Enter" title="Shortcut: Enter">Guess</button>
       </div>
 
       <section class="overlay" data-screen="start">
@@ -47,7 +48,8 @@
         <div id="result-map" class="result-map"></div>
         <div class="result-panel">
           <p id="result-text" class="result-text"></p>
-          <button id="next-button" class="button" type="button">Next round</button>
+          <button id="next-button" class="button" type="button"
+            aria-keyshortcuts="Space" title="Shortcut: Space">Next round</button>
         </div>
       </section>
 

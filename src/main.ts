@@ -11,7 +11,7 @@ import { createResultMap } from './maps/resultMap'
 import { pickLocation, type GridFile } from './sampler'
 import { setupGuessPanel } from './ui/guessPanel'
 import { trackImagery } from './ui/imageryStatus'
-import { showScreen } from './ui/screens'
+import { currentScreen, showScreen } from './ui/screens'
 import { renderSummary } from './ui/summary'
 
 const element = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector)!
@@ -82,9 +82,11 @@ function startRound() {
   showScreen('round')
 }
 
+// submitGuess and next check the screen first, so a key press that also
+// "clicks" a focused button can't run them twice.
 function submitGuess() {
   const guess = guessMap.guess()
-  if (!guess) return
+  if (currentScreen() !== 'round' || !guess) return
   const result = game.submitGuess(guess)
   resultText.textContent =
     `${formatDistance(result.distanceKm)} away: ${formatPoints(result.points)} points. ` +
@@ -95,6 +97,7 @@ function submitGuess() {
 }
 
 function next() {
+  if (currentScreen() !== 'result') return
   if (!game.isOver) {
     startRound()
     return
@@ -109,6 +112,18 @@ startButton.addEventListener('click', () => (grid ? startGame() : void prepare()
 guessButton.addEventListener('click', submitGuess)
 nextButton.addEventListener('click', next)
 playAgainButton.addEventListener('click', startGame)
+
+// Keyboard: Enter submits the guess, Space moves on from the result.
+document.addEventListener('keydown', (event) => {
+  if (event.repeat) return
+  if (event.key === 'Enter' && currentScreen() === 'round') {
+    event.preventDefault()
+    submitGuess()
+  } else if (event.key === ' ' && currentScreen() === 'result') {
+    event.preventDefault() // also stops the page from scrolling
+    next()
+  }
+})
 
 showScreen('start')
 void prepare()
