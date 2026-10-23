@@ -1,9 +1,35 @@
+import geopandas as gpd
 import numpy as np
 import pytest
 import rasterio
 from rasterio.transform import from_origin
+from shapely.geometry import box
 
-from build_grid import aggregate_raster, aggregation_factor, block_sum
+from build_grid import (
+    aggregate_raster,
+    aggregation_factor,
+    block_sum,
+    cell_centres,
+    fill_orphans,
+    nearest_country,
+    rasterize_countries,
+)
+
+# A 4 x 6 grid of 1-degree cells just north of the equator:
+# lon 0..6, lat 0..4. Country A covers lon 0-3, B covers lon 3-5,
+# and the last column (lon 5-6) is "sea".
+GRID_TRANSFORM = from_origin(0, 4, 1, 1)
+GRID_SHAPE = (4, 6)
+METRIC_CRS = "EPSG:8857"
+
+
+@pytest.fixture
+def two_countries():
+    return gpd.GeoDataFrame(
+        {"code": ["AAA", "BBB"], "name": ["A", "B"]},
+        geometry=[box(0, 0, 3, 4), box(3, 0, 5, 4)],
+        crs="EPSG:4326",
+    )
 
 
 def write_geotiff(path, array, west, north, pixel_size):
@@ -65,3 +91,56 @@ def test_aggregate_raster_matches_whole_array_block_sum(tmp_path):
     assert (transform.c, transform.f) == (-10.0, 5.0)  # origin unchanged
     assert transform.a == pytest.approx(0.03)
     assert transform.e == pytest.approx(-0.03)
+
+
+def test_rasterize_countries(two_countries):
+    grid = rasterize_countries(two_countries, GRID_TRANSFORM, GRID_SHAPE)
+    expected_row = [1, 1, 1, 2, 2, 0]  # country row + 1; 0 = no country
+    np.testing.assert_array_equal(grid, np.tile(expected_row, (4, 1)))
+
+
+def test_rasterize_countries_uses_cell_centres():
+    # Top-left cell spans lon 0-1, lat 3-4, so its centre is (0.5, 3.5).
+    misses_centre = box(0.1, 3.1, 0.4, 3.4)
+    covers_centre = box(0.0, 3.0, 0.6, 4.0)
+    for geom, expected in [(misses_centre, 0), (covers_centre, 1)]:
+        countries = gpd.GeoDataFrame(geometry=[geom], crs="EPSG:4326")
+        assert rasterize_countries(countries, GRID_TRANSFORM, GRID_SHAPE)[0, 0] == expected
+
+
+def test_cell_centres():
+    transform = from_origin(-10, 5, 0.5, 0.5)
+    lons, lats = cell_centres(np.array([0, 2]), np.array([0, 3]), transform)
+    np.testing.assert_allclose(lons, [-9.75, -8.25])
+    np.testing.assert_allclose(lats, [4.75, 3.75])
+
+
+def test_nearest_country(two_countries):
+    lons = np.array([5.3, -0.2, 50.0])  # just east of B, just west of A, far away
+    lats = np.array([2.0, 2.0, 2.0])
+    nearest = nearest_country(lons, lats, two_countries, METRIC_CRS, max_distance_km=100)
+    np.testing.assert_array_equal(nearest, [1, 0, -1])
+
+
+def test_fill_orphans(two_countries):
+    grid = rasterize_countries(two_countries, GRID_TRANSFORM, GRID_SHAPE)
+    pop = np.zeros(GRID_SHAPE)
+    pop[1, 5] = 50  # populated "sea" cell next to B
+    pop[2, 0] = 70  # already in A
+
+    filled = fill_orphans(grid, pop, two_countries, GRID_TRANSFORM, METRIC_CRS, max_distance_km=200)
+
+    assert filled[1, 5] == 2  # snapped to B
+    assert filled[0, 5] == 0  # unpopulated sea cell is left alone
+    unchanged = np.ones(GRID_SHAPE, dtype=bool)
+    unchanged[1, 5] = False
+    np.testing.assert_array_equal(filled[unchanged], grid[unchanged])
+    assert grid[1, 5] == 0  # input not modified
+
+
+def test_fill_orphans_respects_max_distance(two_countries):
+    grid = rasterize_countries(two_countries, GRID_TRANSFORM, GRID_SHAPE)
+    pop = np.zeros(GRID_SHAPE)
+    pop[1, 5] = 50  # centre is 0.5 degrees (~55 km) east of B
+    filled = fill_orphans(grid, pop, two_countries, GRID_TRANSFORM, METRIC_CRS, max_distance_km=20)
+    assert filled[1, 5] == 0

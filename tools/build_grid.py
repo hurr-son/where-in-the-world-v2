@@ -8,14 +8,21 @@ import math
 import tomllib
 from pathlib import Path
 
+import geopandas as gpd
 import numpy as np
 import rasterio
+from rasterio.features import rasterize
 from rasterio.transform import Affine
 from rasterio.windows import Window
 
 TOOLS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = TOOLS_DIR.parent
 CONFIG_PATH = TOOLS_DIR / "grid.toml"
+
+# Natural Earth fields. ADM0_A3 is unique per feature (ISO_A3 is "-99" for
+# France, Norway and others); ADMIN is the common English name.
+CODE_FIELD = "ADM0_A3"
+NAME_FIELD = "ADMIN"
 
 
 def load_config(path: Path = CONFIG_PATH) -> dict:
@@ -74,6 +81,75 @@ def aggregate_raster(
     return np.vstack(strips), transform
 
 
+def load_countries(path: Path) -> gpd.GeoDataFrame:
+    """Read country polygons as columns code, name, geometry in EPSG:4326."""
+    countries = gpd.read_file(path, columns=[CODE_FIELD, NAME_FIELD])
+    countries = countries.rename(columns={CODE_FIELD: "code", NAME_FIELD: "name"})
+    return countries.to_crs("EPSG:4326").reset_index(drop=True)
+
+
+def rasterize_countries(
+    countries: gpd.GeoDataFrame, transform: Affine, shape: tuple[int, int]
+) -> np.ndarray:
+    """Burn country numbers onto the grid: i + 1 for row i of countries, 0 for none.
+
+    A cell gets a country only if the cell's centre is inside the polygon.
+    """
+    shapes = ((geom, i + 1) for i, geom in enumerate(countries.geometry))
+    return rasterize(shapes, out_shape=shape, transform=transform, fill=0, dtype="uint16")
+
+
+def cell_centres(
+    rows: np.ndarray, cols: np.ndarray, transform: Affine
+) -> tuple[np.ndarray, np.ndarray]:
+    """Lon/lat of cell centres for a north-up grid (no rotation in the transform)."""
+    lons = transform.c + (cols + 0.5) * transform.a
+    lats = transform.f + (rows + 0.5) * transform.e
+    return lons, lats
+
+
+def nearest_country(
+    lons: np.ndarray,
+    lats: np.ndarray,
+    countries: gpd.GeoDataFrame,
+    metric_crs: str,
+    max_distance_km: float,
+) -> np.ndarray:
+    """For each point, the row in countries of the nearest polygon, or -1 if
+    none is within max_distance_km. Distances are measured in metric_crs."""
+    points = gpd.GeoDataFrame(
+        geometry=gpd.points_from_xy(lons, lats), crs="EPSG:4326"
+    ).to_crs(metric_crs)
+    # Split multipolygons into their parts so the spatial index works on
+    # individual islands; each part keeps its country's row as its index.
+    parts = countries[["geometry"]].to_crs(metric_crs).explode(index_parts=False)
+    joined = gpd.sjoin_nearest(points, parts, how="left", max_distance=max_distance_km * 1000)
+    # A point equally close to two parts gets two rows; keep the first.
+    joined = joined[~joined.index.duplicated(keep="first")]
+    return joined["index_right"].fillna(-1).astype(int).to_numpy()
+
+
+def fill_orphans(
+    country_grid: np.ndarray,
+    pop: np.ndarray,
+    countries: gpd.GeoDataFrame,
+    transform: Affine,
+    metric_crs: str,
+    max_distance_km: float,
+) -> np.ndarray:
+    """Give populated cells with no country the nearest country.
+
+    These are mostly coastal cells whose centre falls in the sea. Cells with
+    no country within max_distance_km stay 0.
+    """
+    rows, cols = np.nonzero((country_grid == 0) & (pop > 0))
+    lons, lats = cell_centres(rows, cols, transform)
+    nearest = nearest_country(lons, lats, countries, metric_crs, max_distance_km)
+    filled = country_grid.copy()
+    filled[rows, cols] = nearest + 1  # -1 (nothing in range) becomes 0, no country
+    return filled
+
+
 def main() -> None:
     config = load_config()
     pop, transform = aggregate_raster(
@@ -82,6 +158,23 @@ def main() -> None:
     print(f"Grid: {pop.shape[0]} rows x {pop.shape[1]} cols, cell size {transform.a:.6f} deg")
     print(f"Origin (top-left): lon {transform.c:.6f}, lat {transform.f:.6f}")
     print(f"Total population: {pop.sum():,.0f}")
+
+    countries = load_countries(REPO_ROOT / config["inputs"]["countries"])
+    by_centre = rasterize_countries(countries, transform, pop.shape)
+    orphans = (by_centre == 0) & (pop > 0)
+    print(f"Populated cells with no country by centre: {orphans.sum():,} ({pop[orphans].sum():,.0f} people)")
+
+    country_grid = fill_orphans(
+        by_centre,
+        pop,
+        countries,
+        transform,
+        config["countries"]["metric_crs"],
+        config["countries"]["max_snap_km"],
+    )
+    unassigned = (country_grid == 0) & (pop > 0)
+    print(f"Still no country within {config['countries']['max_snap_km']} km: "
+          f"{unassigned.sum():,} cells ({pop[unassigned].sum():,.0f} people)")
 
 
 if __name__ == "__main__":
