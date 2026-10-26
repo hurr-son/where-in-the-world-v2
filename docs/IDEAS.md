@@ -8,6 +8,10 @@
 - Daily challenge: same 5 locations for everyone, seeded by date (planned in
   [LEADERBOARD_PLAN.md](LEADERBOARD_PLAN.md)).
 
+## Study mode
+- Browse or flashcard imagery with the answer shown: see
+  [TRAINING_PLAN.md](TRAINING_PLAN.md).
+
 ## Layout
 - Desktop: enlarge the guess map on hover (it's a fixed 360 x 240 px now).
 
