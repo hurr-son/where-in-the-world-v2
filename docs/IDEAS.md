@@ -5,7 +5,8 @@
   ("world tour" ↔ "where people actually live").
 - Hints (pay points to reveal continent).
 - Avoid repeating a country within a game (now only the same ~5 km cell is avoided).
-- Daily challenge: same 5 locations for everyone, seeded by date.
+- Daily challenge: same 5 locations for everyone, seeded by date (planned in
+  [LEADERBOARD_PLAN.md](LEADERBOARD_PLAN.md)).
 
 ## Layout
 - Desktop: enlarge the guess map on hover (it's a fixed 360 x 240 px now).
@@ -22,7 +23,8 @@
 - Run the pipeline's pytest suite in CI too (needs the GDAL-based wheels).
 
 ## Needs a backend
-- Accounts, leaderboards, multiplayer.
+- Leaderboards: see [LEADERBOARD_PLAN.md](LEADERBOARD_PLAN.md).
+- Accounts, multiplayer.
 
 ## Sampling quality
 - The point is uniform within a ~5 km cell, so the imagery can show fields or
