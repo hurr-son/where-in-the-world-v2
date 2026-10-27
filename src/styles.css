@@ -76,9 +76,10 @@ body {
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.5);
 }
 
-/* Phone-only buttons (see the media query at the end). */
+/* Buttons for one screen size only (see the media queries at the end). */
 .guess-expand,
-.guess-collapse {
+.guess-collapse,
+.guess-resize {
   display: none;
 }
 
@@ -210,9 +211,9 @@ body {
   text-align: right;
 }
 
-/* Desktop: the guess map grows while the mouse is over it and shrinks back
-   when it leaves. MapLibre notices the size change and redraws. */
-@media (min-width: 641px) and (hover: hover) {
+/* Desktop: the "Enlarge" button toggles a bigger guess map. MapLibre
+   notices the size change and redraws. */
+@media (min-width: 641px) {
   .guess-panel {
     transition: width 0.2s ease;
   }
@@ -221,12 +222,28 @@ body {
     transition: height 0.2s ease;
   }
 
-  .guess-panel:hover {
+  .guess-panel.large {
     width: min(720px, calc(100vw - 24px));
   }
 
-  .guess-panel:hover .guess-map {
+  .guess-panel.large .guess-map {
     height: min(480px, calc(100vh - 160px));
+  }
+
+  .guess-resize {
+    display: block;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: rgb(0 0 0 / 0.65);
+    color: white;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
   }
 }
 
