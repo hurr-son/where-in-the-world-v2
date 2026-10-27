@@ -210,6 +210,26 @@ body {
   text-align: right;
 }
 
+/* Desktop: the guess map grows while the mouse is over it and shrinks back
+   when it leaves. MapLibre notices the size change and redraws. */
+@media (min-width: 641px) and (hover: hover) {
+  .guess-panel {
+    transition: width 0.2s ease;
+  }
+
+  .guess-map {
+    transition: height 0.2s ease;
+  }
+
+  .guess-panel:hover {
+    width: min(720px, calc(100vw - 24px));
+  }
+
+  .guess-panel:hover .guess-map {
+    height: min(480px, calc(100vh - 160px));
+  }
+}
+
 /* Phones: the guess map spans the bottom of the screen. It starts short;
    tapping it opens it (a see-through button over the map catches that first
    tap, so it doesn't drop a marker), and "Show image" closes it. */
