@@ -169,6 +169,20 @@ body {
   padding: 16px;
 }
 
+/* Labels above the result map's pins (see maps/resultMap.ts). */
+.pin-label .maplibregl-popup-content {
+  padding: 3px 8px;
+  font-weight: 600;
+}
+
+.pin-label-guess .maplibregl-popup-content {
+  color: #2a7fd4;
+}
+
+.pin-label-answer .maplibregl-popup-content {
+  color: #d33;
+}
+
 .result-text {
   margin: 0;
   font-size: 1.2rem;

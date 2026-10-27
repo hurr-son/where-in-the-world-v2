@@ -23,8 +23,9 @@ export const config = {
     cellExponent: 0.8,
   },
 
-  /** Map zoom of the imagery view. With 512 px tiles, map zoom = tile zoom. */
-  imageryZoom: 16,
+  /** Map zoom of the imagery view. With 512 px tiles, map zoom = tile zoom.
+   *  14 shows about 4x the area of 16 (the sharpest with global coverage). */
+  imageryZoom: 14,
   /** How far beyond the starting view the player can pan the imagery, in km.
    *  0 turns panning and zooming off. */
   panRadiusKm: 0,

@@ -1,4 +1,4 @@
-import { LngLatBounds, MapLibreMap, Marker, type GeoJSONSource } from 'maplibre-gl'
+import { LngLatBounds, MapLibreMap, Marker, Popup, type GeoJSONSource } from 'maplibre-gl'
 import { config } from '../config'
 import { greatCirclePoints, type LatLon } from '../geo'
 import './setup'
@@ -47,6 +47,8 @@ export function createResultMap(container: HTMLElement): ResultMap {
 
   const guessMarker = new Marker({ color: GUESS_COLOR })
   const answerMarker = new Marker({ color: ANSWER_COLOR })
+  const guessLabel = pinLabel('Your guess', 'guess')
+  const answerLabel = pinLabel('Answer', 'answer')
 
   return {
     map,
@@ -58,6 +60,8 @@ export function createResultMap(container: HTMLElement): ResultMap {
       // past +-180) so they stay attached to it.
       guessMarker.setLngLat(points[0]).addTo(map)
       answerMarker.setLngLat(points[points.length - 1]).addTo(map)
+      guessLabel.setLngLat(points[0]).addTo(map)
+      answerLabel.setLngLat(points[points.length - 1]).addTo(map)
 
       const bounds = new LngLatBounds()
       for (const point of points) bounds.extend(point)
@@ -72,4 +76,15 @@ export function createResultMap(container: HTMLElement): ResultMap {
       })
     },
   }
+}
+
+/** A small always-open label above a pin. The default pin is ~41 px tall. */
+function pinLabel(text: string, kind: 'guess' | 'answer'): Popup {
+  return new Popup({
+    closeButton: false,
+    closeOnClick: false,
+    anchor: 'bottom',
+    offset: 42,
+    className: `pin-label pin-label-${kind}`,
+  }).setText(text)
 }
